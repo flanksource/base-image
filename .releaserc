@@ -4,14 +4,10 @@ plugins:
         - { type: doc, scope: README, release: patch }
         - { type: fix, release: patch }
         - { type: chore, release: patch }
+        - { type: build, release: patch }
         - { type: refactor, release: patch }
-        - { type: feat, release: patch }
+        - { type: feat, release: minor }
         - { type: ci, release: false }
         - { type: style, release: false }
-        - { type: major, release: major }
-      parserOpts:
-        noteKeywords:
-          - MAJOR RELEASE
+  - "@semantic-release/release-notes-generator"
   - - "@semantic-release/github"
-    - successComment: false
-      failTitle: false
