@@ -2,7 +2,7 @@ FROM ubuntu:jammy-20240227@sha256:77906da86b60585ce12215807090eb327e7386c8fafb54
 WORKDIR /app
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
-  apt-get install -y curl unzip ca-certificates jq  tzdata wget gnupg2 bzip2 apt-transport-https lsb-release git --no-install-recommends  && \
+  apt-get install -y curl unzip ca-certificates jq zip  tzdata wget gnupg2 bzip2 apt-transport-https lsb-release git --no-install-recommends  && \
   apt-get clean
 
 RUN apt-get update && apt-get upgrade -y && \
