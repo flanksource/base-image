@@ -1,6 +1,10 @@
 FROM ubuntu:jammy-20240227@sha256:77906da86b60585ce12215807090eb327e7386c8fafb5402369e421f44eff17e
 WORKDIR /app
+
+ARG TARGETARCH
+
 ENV DEBIAN_FRONTEND=noninteractive
+
 RUN apt-get update && \
   apt-get install -y curl unzip ca-certificates zip  tzdata wget gnupg2 bzip2 apt-transport-https lsb-release git --no-install-recommends  && \
   apt-get clean
@@ -24,7 +28,11 @@ RUN mkdir -p /etc/apt/keyrings && \
   apt-get clean
 
 # Install AWS CLI
-RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
+RUN AWSCLI_URL="https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" && \
+  if [ "${TARGETARCH}" = "arm64" ]; then \
+    AWSCLI_URL="https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip"; \
+  fi && \
+  curl "${AWSCLI_URL}" -o "awscliv2.zip" && \
   unzip -q awscliv2.zip && ./aws/install -i /aws -b /usr/bin/ && \
   rm awscliv2.zip
 
