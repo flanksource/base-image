@@ -27,11 +27,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2.7.0
+
       - name: Set version
         # Always use git tags as semantic release can fail due to rate limit
         run: |
           git fetch --prune --unshallow
           echo "RELEASE_VERSION=$(git describe --abbrev=0 --tags | sed -e 's/^v//')" >> $GITHUB_ENV
+
+      - name: Set up Docker Buildx #must be executed before a step that contains platforms
+        uses: docker/setup-buildx-action@v2
+
       - name: Publish minimal image to registry
         uses: elgohr/Publish-Docker-Github-Action@8217e91c0369a5342a4ef2d612de87492410a666 # master
         with:
@@ -40,5 +45,5 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
           snapshot: true
           dockerfile: Dockerfile
-          tags: "latest,v${{ env.RELEASE_VERSION }}"
+          tags: 'latest,v${{ env.RELEASE_VERSION }}'
           platforms: linux/amd64,linux/arm64
