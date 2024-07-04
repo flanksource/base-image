@@ -20,17 +20,15 @@ jobs:
       - name: Set up Docker Buildx #must be executed before a step that contains platforms
         uses: docker/setup-buildx-action@v2
 
-      - name: Build image
-        uses: elgohr/Publish-Docker-Github-Action@8217e91c0369a5342a4ef2d612de87492410a666 # master
-        with:
-          name: flanksource/base-image
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-          no_push: true
-          dockerfile: Dockerfile
-          tags: 'latest,v${{ env.RELEASE_VERSION }}'
-          platforms: linux/amd64,linux/arm64
+      - name: Build image for multiple platforms
+        # Need to build for 2 platforms in 2 stages even though --platform=linux/amd64,linux/arm64 is possible.
+        # This is because --load isn't compatible when multiple args are passed to --platform.
+        #   https://github.com/docker/buildx/issues/59
+        # We want --load to save the image to local registry.
+        run: |
+          docker buildx build --load --platform linux/arm64 -t flanksource/base-image:${{ env.RELEASE_VERSION }} .
+          docker buildx build --load --platform linux/amd64 -t flanksource/base-image:${{ env.RELEASE_VERSION }} .
 
       - name: Run the container
         run: |
-          docker run --rm flanksource/base-image:${{ env.RELEASE_VERSION }} echo 'hello world'
+          docker run --pull=never --rm flanksource/base-image:${{ env.RELEASE_VERSION }} echo 'hello world'
