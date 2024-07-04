@@ -41,3 +41,4 @@ jobs:
           snapshot: true
           dockerfile: Dockerfile
           tags: "latest,v${{ env.RELEASE_VERSION }}"
+          platforms: linux/amd64,linux/arm64
