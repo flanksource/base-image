@@ -27,16 +27,12 @@ jobs:
     steps:
       - uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2.7.0
 
-      - name: Set version
-        # Always use git tags as semantic release can fail due to rate limit
-        run: |
-          git fetch --prune --unshallow
-          echo "RELEASE_VERSION=$(git describe --abbrev=0 --tags | sed -e 's/^v//')" >> $GITHUB_ENV
-
       - name: Set up Docker Buildx #must be executed before a step that contains platforms
         uses: docker/setup-buildx-action@v2
 
       - name: Publish base image to registry
+        env:
+          RELEASE_VERSION: v${{ needs.semantic-release.outputs.release-version }}
         uses: elgohr/Publish-Docker-Github-Action@eb53b3ec07136a6ebaed78d8135806da64f7c7e2 # v5
         with:
           name: flanksource/base-image
@@ -48,6 +44,8 @@ jobs:
           platforms: linux/amd64
 
       - name: Publish canary-checker base image to registry
+        env:
+          RELEASE_VERSION: v${{ needs.semantic-release.outputs.release-version }}
         uses: elgohr/Publish-Docker-Github-Action@eb53b3ec07136a6ebaed78d8135806da64f7c7e2 # v5
         with:
           name: flanksource/base-image-canary-checker
@@ -64,16 +62,12 @@ jobs:
     steps:
       - uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2.7.0
 
-      - name: Set version
-        # Always use git tags as semantic release can fail due to rate limit
-        run: |
-          git fetch --prune --unshallow
-          echo "RELEASE_VERSION=$(git describe --abbrev=0 --tags | sed -e 's/^v//')" >> $GITHUB_ENV
-
       - name: Set up Docker Buildx #must be executed before a step that contains platforms
         uses: docker/setup-buildx-action@v2
 
       - name: Publish base image to registry
+        env:
+          RELEASE_VERSION: v${{ needs.semantic-release.outputs.release-version }}
         uses: elgohr/Publish-Docker-Github-Action@eb53b3ec07136a6ebaed78d8135806da64f7c7e2 # v5
         with:
           name: flanksource/base-image
@@ -85,6 +79,8 @@ jobs:
           platforms: linux/arm64
 
       - name: Publish canary-checker base image to registry
+        env:
+          RELEASE_VERSION: v${{ needs.semantic-release.outputs.release-version }}
         uses: elgohr/Publish-Docker-Github-Action@eb53b3ec07136a6ebaed78d8135806da64f7c7e2 # v5
         with:
           name: flanksource/base-image-canary-checker
