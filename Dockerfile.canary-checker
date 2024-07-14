@@ -1,4 +1,4 @@
-FROM --platform=${BUILDPLATFORM:-linux/amd64} flanksource/base-image
+FROM --platform=${BUILDPLATFORM:-linux/amd64} flanksource/base-image as base
 ARG TARGETARCH
 
 WORKDIR /app
@@ -11,6 +11,41 @@ RUN apt-get update && \
   rm -Rf /usr/share/doc && rm -Rf /usr/share/man  && \
   apt-get clean
 
+FROM base as jre
+
+ENV SDKMAN_DIR="/usr/lib/sdkman"
+
+RUN apt-get update &&   apt-get install -y binutils --no-install-recommends
+ENV JAVA_VERSION=21.0.2-tem
+ENV JMETER_VERSION=5.6
+ENV JMETER_HOME=${SDKMAN_DIR}/candidates/jmeter/${JMETER_VERSION}
+ENV JAVA_HOME=${SDKMAN_DIR}/candidates/java/${JAVA_VERSION}
+ENV PATH="$PATH:$SDKMAN_DIR/bin:$JAVA_HOME/bin:$JMETER_HOME/bin"
+SHELL [ "bash", "-c" ]
+RUN  curl -s "https://get.sdkman.io?rcupdate=false" | bash && \
+    . $SDKMAN_DIR/bin/sdkman-init.sh && \
+    sdk install java ${JAVA_VERSION} ${JAVA_HOME} && \
+    sdk install jmeter ${JMETER_VERSION} ${JMETER_HOME} && \
+    sdk flush tmp
+RUN rm -rf $SDKMAN_DIR/candidates/jmeter/current/docs && \
+    rm -rf  $SDKMAN_DIR/candidates/jmeter/current/printable_docs
+
+RUN  jlink \
+      --verbose \
+      --add-modules ALL-MODULE-PATH \
+      --strip-debug \
+      --no-man-pages \
+      --no-header-files \
+      --output /javaruntime
+
+FROM base
+
+ENV JAVA_HOME=/opt/java
+ENV JMETER_HOME=/opt/jmeter
+COPY --from=jre /javaruntime $JAVA_HOME
+COPY --from=jre /usr/lib/sdkman/candidates/jmeter/current /opt/jmeter
+ENV PATH "${JAVA_HOME}/bin:${JMETER_HOME}/bin:${PATH}"
+
 RUN pip3 install  pip pyyaml lxml requests robotframework \
     robotframework \
     robotframework-jsonlibrary \
@@ -22,7 +57,8 @@ RUN pip3 install  pip pyyaml lxml requests robotframework \
     robotframework-crypto \
     robotframework-databaselibrary \
     psycopg2-binary \
-    PyMySQL
+    PyMySQL && \
+    pip3 cache purge
 
 # Restic
 ENV RESTIC_VERSION=0.15.2
@@ -32,7 +68,7 @@ RUN curl -L https://github.com/restic/restic/releases/download/v${RESTIC_VERSION
   mv /app/restic /usr/local/bin/ && \
   rm -rf /app/restic.bz2
 
-# Mergestat 
+# Mergestat
 # Unsupported in arm64 as of yet
 RUN curl -L https://github.com/flanksource/askgit/releases/download/v0.61.0-flanksource.1/mergestat-linux-amd64.tar.gz  -o mergestat.tar.gz && \
   tar zxf mergestat.tar.gz -C /usr/local/bin/ && \
@@ -53,17 +89,3 @@ RUN curl -L https://github.com/multiprocessio/dsq/releases/download/v0.23.0/dsq-
   unzip -q dsq.zip && \
   mv dsq /usr/local/bin/dsq && \
   rm dsq.zip
-
-ENV SDKMAN_DIR="/usr/lib/sdkman"
-
-ENV JAVA_VERSION=21.0.2-tem
-ENV JMETER_VERSION=5.6
-ENV JMETER_HOME=${SDKMAN_DIR}/candidates/jmeter/${JMETER_VERSION}
-ENV JAVA_HOME=${SDKMAN_DIR}/candidates/java/${JAVA_VERSION}
-ENV PATH="$PATH:$SDKMAN_DIR/bin:$JAVA_HOME/bin:$JMETER_HOME/bin"
-SHELL [ "bash", "-c" ]
-RUN  curl -s "https://get.sdkman.io?rcupdate=false" | bash && \
-    . $SDKMAN_DIR/bin/sdkman-init.sh && \
-    sdk install java ${JAVA_VERSION} ${JAVA_HOME} && \
-    sdk install jmeter ${JMETER_VERSION} ${JMETER_HOME} && \
-    sdk flush tmp
