@@ -58,14 +58,6 @@ jobs:
           tags: 'latest,v${{ env.RELEASE_VERSION }}'
           platforms: linux/amd64
 
-      - name: Update base image tag in canary-checker
-        run: |
-          sed -i "s|flanksource/base-image:[^ ]*|flanksource/base-image:v${{ env.RELEASE_VERSION }}|g" Dockerfile.canary-checker
-          git config --global user.name 'flankbot' && git config --global user.email 'flankbot@users.noreply.github.com'
-          git add Dockerfile.canary-checker
-          git commit -m "[skip ci] bump canary-checker base image to v${{ env.RELEASE_VERSION }}
-          git push
-
   arm64:
     needs: semantic-release
     runs-on: ubuntu-latest

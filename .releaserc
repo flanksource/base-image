@@ -13,3 +13,5 @@ plugins:
         - { type: style, release: false }
   - "@semantic-release/release-notes-generator"
   - - "@semantic-release/github"
+    - successComment: false
+      failTitle: false
