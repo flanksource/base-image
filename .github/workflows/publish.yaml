@@ -7,7 +7,6 @@ on:
 permissions:
   contents: read
 
-jobs:
   semantic-release:
     permissions:
       contents: write # for codfish/semantic-release-action to create release tags
@@ -37,7 +36,7 @@ jobs:
       - name: Set up Docker Buildx #must be executed before a step that contains platforms
         uses: docker/setup-buildx-action@v2
 
-      - name: Publish minimal image to registry
+      - name: Publish base image to registry
         uses: elgohr/Publish-Docker-Github-Action@eb53b3ec07136a6ebaed78d8135806da64f7c7e2 # v5
         with:
           name: flanksource/base-image
@@ -47,3 +46,22 @@ jobs:
           dockerfile: Dockerfile
           tags: 'latest,v${{ env.RELEASE_VERSION }}'
           platforms: linux/amd64,linux/arm64
+
+      - name: Publish canary-checker base image to registry
+        uses: elgohr/Publish-Docker-Github-Action@eb53b3ec07136a6ebaed78d8135806da64f7c7e2 # v5
+        with:
+          name: flanksource/base-image-canary-checker
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          snapshot: true
+          dockerfile: Dockerfile.canary-checker
+          tags: 'latest,v${{ env.RELEASE_VERSION }}'
+          platforms: linux/amd64,linux/arm64
+
+      - name: Update base image tag in canary-checker
+        run: |
+          sed -i "s|flanksource/base-image:[^ ]*|flanksource/base-image:v${{ env.RELEASE_VERSION }}|g" Dockerfile.canary-checker
+          git config --global user.name 'flankbot' && git config --global user.email 'flankbot@users.noreply.github.com'
+          git add Dockerfile.canary-checker
+          git commit -m "[skip ci] bump canary-checker base image to v${{ env.RELEASE_VERSION }}
+          git push
