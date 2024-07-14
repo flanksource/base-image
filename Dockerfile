@@ -46,7 +46,7 @@ fi && \
 
 FROM base as final
 
-ENV PATH /google-cloud-sdk/bin:$PATH
+ENV PATH /opt/google-cloud-sdk/bin:$PATH
 ENV CLOUDSDK_PYTHON=/usr/bin/python3
 copy --from=gcloud-installer /opt/google-cloud-sdk /opt/google-cloud-sdk
 # This is to be able to update gcloud packages
