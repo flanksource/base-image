@@ -21,7 +21,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  amd64:
+  docker:
     needs: semantic-release
     runs-on: ubuntu-latest
     steps:
@@ -32,7 +32,7 @@ jobs:
 
       - name: Publish base image to registry
         env:
-          RELEASE_VERSION: v${{ needs.semantic-release.outputs.release-version }}
+          RELEASE_VERSION: ${{ needs.semantic-release.outputs.release-version }}
         uses: elgohr/Publish-Docker-Github-Action@eb53b3ec07136a6ebaed78d8135806da64f7c7e2 # v5
         with:
           name: flanksource/base-image
@@ -41,11 +41,11 @@ jobs:
           snapshot: true
           dockerfile: Dockerfile
           tags: 'latest,v${{ env.RELEASE_VERSION }}'
-          platforms: linux/amd64
+          platforms: linux/amd64,linux/arm64
 
       - name: Publish canary-checker base image to registry
         env:
-          RELEASE_VERSION: v${{ needs.semantic-release.outputs.release-version }}
+          RELEASE_VERSION: ${{ needs.semantic-release.outputs.release-version }}
         uses: elgohr/Publish-Docker-Github-Action@eb53b3ec07136a6ebaed78d8135806da64f7c7e2 # v5
         with:
           name: flanksource/base-image-canary-checker
@@ -54,40 +54,4 @@ jobs:
           snapshot: true
           dockerfile: Dockerfile.canary-checker
           tags: 'latest,v${{ env.RELEASE_VERSION }}'
-          platforms: linux/amd64
-
-  arm64:
-    needs: semantic-release
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2.7.0
-
-      - name: Set up Docker Buildx #must be executed before a step that contains platforms
-        uses: docker/setup-buildx-action@v2
-
-      - name: Publish base image to registry
-        env:
-          RELEASE_VERSION: v${{ needs.semantic-release.outputs.release-version }}
-        uses: elgohr/Publish-Docker-Github-Action@eb53b3ec07136a6ebaed78d8135806da64f7c7e2 # v5
-        with:
-          name: flanksource/base-image
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-          snapshot: true
-          dockerfile: Dockerfile
-          tags: 'latest,v${{ env.RELEASE_VERSION }}'
-          platforms: linux/arm64
-
-      - name: Publish canary-checker base image to registry
-        env:
-          RELEASE_VERSION: v${{ needs.semantic-release.outputs.release-version }}
-        uses: elgohr/Publish-Docker-Github-Action@eb53b3ec07136a6ebaed78d8135806da64f7c7e2 # v5
-        with:
-          name: flanksource/base-image-canary-checker
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-          snapshot: true
-          dockerfile: Dockerfile.canary-checker
-          tags: 'latest,v${{ env.RELEASE_VERSION }}'
-          platforms: linux/arm64
-
+          platforms: linux/amd64,linux/arm64
