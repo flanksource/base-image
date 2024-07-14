@@ -13,10 +13,12 @@ RUN apt-get update && apt-get upgrade -y && \
   rm -Rf /var/lib/apt/lists/* && \
   apt-get clean
 
+# stern, jq, yq
 RUN curl -sLS https://get.arkade.dev | sh && \ 
   arkade get kubectl stern jq yq --path /usr/bin && \
   chmod +x /usr/bin/kubectl /usr/bin/stern /usr/bin/jq /usr/bin/yq
 
+# Azure CLI
 RUN mkdir -p /etc/apt/keyrings && \
   curl -sLS https://packages.microsoft.com/keys/microsoft.asc | \
     gpg --dearmor | tee /etc/apt/keyrings/microsoft.gpg > /dev/null && \
@@ -27,7 +29,7 @@ RUN mkdir -p /etc/apt/keyrings && \
   apt-get install -y azure-cli && \
   apt-get clean
 
-# Install AWS CLI
+# AWS CLI
 RUN AWSCLI_URL="https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" && \
   if [ "${TARGETARCH}" = "arm64" ]; then \
     AWSCLI_URL="https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip"; \
@@ -36,6 +38,7 @@ RUN AWSCLI_URL="https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" && \
   unzip -q awscliv2.zip && ./aws/install -i /aws -b /usr/bin/ && \
   rm awscliv2.zip
 
+# GCP CLI
 RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list && \
     curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg && \
     apt-get update -y && \
