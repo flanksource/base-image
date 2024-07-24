@@ -15,8 +15,11 @@ RUN apt-get update && apt-get upgrade -y && \
 
 # stern, jq, yq
 RUN curl -sLS https://get.arkade.dev | sh && \ 
-  arkade get kubectl stern jq yq --path /usr/bin && \
-  chmod +x /usr/bin/kubectl /usr/bin/stern /usr/bin/jq /usr/bin/yq
+  arkade get kubectl stern jq yq sops --path /usr/bin && \
+  chmod +x /usr/bin/kubectl /usr/bin/stern /usr/bin/jq /usr/bin/yq /usr/bin/sops
+
+RUN curl https://sh.rustup.rs -sSf | sh && \
+    cargo install fblog
 
 # Minimalized Google cloud sdk
 FROM base as gcloud-installer
