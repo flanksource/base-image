@@ -27,31 +27,33 @@ jobs:
     steps:
       - uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2.7.0
 
-      - name: Set up Docker Buildx #must be executed before a step that contains platforms
-        uses: docker/setup-buildx-action@v2
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
 
-      - name: Publish base image to registry
-        env:
-          RELEASE_VERSION: ${{ needs.semantic-release.outputs.release-version }}
-        uses: elgohr/Publish-Docker-Github-Action@eb53b3ec07136a6ebaed78d8135806da64f7c7e2 # v5
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
         with:
-          name: flanksource/base-image
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-          snapshot: true
-          dockerfile: Dockerfile
-          tags: 'latest,v${{ env.RELEASE_VERSION }}'
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        env:
+          RELEASE_VERSION: ${{ needs.semantic-release.outputs.release-version }}
+        with:
+          push: true
+          tags: "flanksource/base-image:latest,flanksource/base-image:v${{ env.RELEASE_VERSION }}"
           platforms: linux/amd64,linux/arm64
 
-      - name: Publish canary-checker base image to registry
+      - name: Build and push
+        uses: docker/build-push-action@v6
         env:
           RELEASE_VERSION: ${{ needs.semantic-release.outputs.release-version }}
-        uses: elgohr/Publish-Docker-Github-Action@eb53b3ec07136a6ebaed78d8135806da64f7c7e2 # v5
         with:
-          name: flanksource/base-image-canary-checker
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-          snapshot: true
-          dockerfile: Dockerfile.canary-checker
-          tags: 'latest,v${{ env.RELEASE_VERSION }}'
+          push: true
+          file: Dockerfile.canary-checker
+          tags: "flanksource/base-image-canary-checker:latest,flanksource/base-image-canary-checker:v${{ env.RELEASE_VERSION }}"
           platforms: linux/amd64,linux/arm64
