@@ -68,20 +68,12 @@ RUN --mount=from=installer-env,target=/mnt/pwsh,source=/tmp \
     tar zxf /mnt/pwsh/powershell.tar.gz -C /opt/powershell && \
     chmod +x /opt/powershell/pwsh && \
     ln -s /opt/powershell/pwsh /usr/bin/pwsh && \
-    pwsh -c "Install-Module -Force -Name powershell-yaml" && \
+    # install module outsize of powershell due to segfaults on emulated arm
+    curl -L -o powershell-yaml.nupkg https://psg-prod-eastus.azureedge.net/packages/powershell-yaml.0.4.7.nupkg  && \
+    mkdir -p $HOME/.local/share/powershell/Modules/powershell-yaml/0.4.7 && \
+    unzip powershell-yaml.nupkg -x */.rels *.nuspec *.xml -d $HOME/.local/share/powershell/Modules/powershell-yaml/0.4.7 && \
+    rm powershell-yaml.nupkg && \
     apt-get clean
-
-RUN pwsh \
--NoLogo \
--NoProfile \
--Command " \
-  \$ErrorActionPreference = 'Stop' ; \
-  \$ProgressPreference = 'SilentlyContinue' ; \
-  while(!(Test-Path -Path \$env:PSModuleAnalysisCachePath)) {  \
-    Write-Host "'Waiting for $env:PSModuleAnalysisCachePath'" ; \
-    Start-Sleep -Seconds 6 ; \
-  }"
-
 
 # Minimalized Google cloud sdk
 FROM base as gcloud-installer
