@@ -1,3 +1,16 @@
+FROM ubuntu:jammy-20240227@sha256:77906da86b60585ce12215807090eb327e7386c8fafb5402369e421f44eff17e AS installer-env
+ENV DEBIAN_FRONTEND=noninteractive
+ARG TARGETARCH
+ENV PS_VERSION=7.4.4
+
+RUN --mount=type=cache,target=/var/lib/apt \
+    --mount=type=cache,target=/var/cache/apt \
+    apt-get update \
+    && apt-get install --no-install-recommends -y  curl less locales ca-certificates && \
+    ARCH=${TARGETARCH} && \
+    if [ "${TARGETARCH}" = "amd64" ]; then ARCH="x64"; fi && \
+    curl -L -o /tmp/powershell.tar.gz https://github.com/PowerShell/PowerShell/releases/download/v${PS_VERSION}/powershell-${PS_VERSION}-linux-${ARCH}.tar.gz
+
 FROM ubuntu:jammy-20240227@sha256:77906da86b60585ce12215807090eb327e7386c8fafb5402369e421f44eff17e as base
 WORKDIR /app
 
@@ -6,7 +19,7 @@ ARG TARGETARCH
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && \
-  apt-get install -y curl unzip ca-certificates zip  tzdata wget gnupg2 bzip2 apt-transport-https lsb-release git   python3-crcmod python3-openssl --no-install-recommends  && \
+  apt-get install -y curl unzip ca-certificates zip tzdata wget gnupg2 bzip2 apt-transport-https lsb-release git python3-crcmod python3-openssl --no-install-recommends  && \
   apt-get clean
 
 RUN apt-get update && apt-get upgrade -y && \
@@ -14,12 +27,53 @@ RUN apt-get update && apt-get upgrade -y && \
   apt-get clean
 
 # stern, jq, yq
-RUN curl -sLS https://get.arkade.dev | sh && \ 
+RUN curl -sLS https://get.arkade.dev | sh && \
   arkade get kubectl stern jq yq sops --path /usr/bin && \
   chmod +x /usr/bin/kubectl /usr/bin/stern /usr/bin/jq /usr/bin/yq /usr/bin/sops
 
-RUN curl https://sh.rustup.rs -sSf | sh -s -- -y && \
-    cargo install fblog
+RUN apt-get update && apt-get install -y build-essential --no-install-recommends && \
+    curl https://sh.rustup.rs -sSf | sh -s -- -y && \
+    $HOME/.cargo/bin/cargo install fblog && \
+    mv $HOME/.cargo/bin/fblog /usr/bin/fblog && \
+    apt-get autoremove build-essential -y && \
+    apt-get clean && \
+    $HOME/.cargo/bin/rustup self uninstall -y
+
+ARG POWERSHELL_VERSION=7.4.4
+
+# Define ENVs for Localization/Globalization
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
+ENV LC_ALL=en_US.UTF-8
+ENV LANG=en_US.UTF-8
+ENV PS_INSTALL_FOLDER=/opt/powershell
+ENV POWERSHELL_TELEMETRY_OPTOUT=1
+ENV PSModuleAnalysisCachePath=/var/cache/microsoft/powershell/PSModuleAnalysisCache/ModuleAnalysisCache
+ENV PS_VERSION=7.4.4
+RUN --mount=from=installer-env,target=/mnt/pwsh,source=/tmp \
+    --mount=type=cache,target=/var/lib/apt \
+    --mount=type=cache,target=/var/cache/apt \
+    apt-get update  && \
+    apt-get install -y --no-install-recommends \
+      less locales \
+      gss-ntlmssp \
+      libicu70 \
+      libssl3 \
+      libc6 \
+      libgcc1 \
+      libgssapi-krb5-2 \
+      liblttng-ust1 \
+      libstdc++6 \
+      zlib1g && \
+    mkdir -p /opt/powershell && \
+    tar zxf /mnt/pwsh/powershell.tar.gz -C /opt/powershell && \
+    chmod +x /opt/powershell/pwsh && \
+    ln -s /opt/powershell/pwsh /usr/bin/pwsh && \
+    # install module outsize of powershell due to segfaults on emulated arm
+    curl -L -o powershell-yaml.nupkg https://psg-prod-eastus.azureedge.net/packages/powershell-yaml.0.4.7.nupkg  && \
+    mkdir -p $HOME/.local/share/powershell/Modules/powershell-yaml/0.4.7 && \
+    unzip powershell-yaml.nupkg -x */.rels *.nuspec *.xml -d $HOME/.local/share/powershell/Modules/powershell-yaml/0.4.7 && \
+    rm powershell-yaml.nupkg && \
+    apt-get clean
 
 # Minimalized Google cloud sdk
 FROM base as gcloud-installer
@@ -51,7 +105,7 @@ FROM base as final
 
 ENV PATH /opt/google-cloud-sdk/bin:$PATH
 ENV CLOUDSDK_PYTHON=/usr/bin/python3
-copy --from=gcloud-installer /opt/google-cloud-sdk /opt/google-cloud-sdk
+COPY --from=gcloud-installer /opt/google-cloud-sdk /opt/google-cloud-sdk
 # This is to be able to update gcloud packages
 RUN git config --system credential.'https://source.developers.google.com'.helper gcloud.sh
 
@@ -77,5 +131,5 @@ RUN AWSCLI_URL="https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" && \
   curl "${AWSCLI_URL}" -o "awscliv2.zip" && \
   unzip -q awscliv2.zip && ./aws/install -i /opt/aws -b /usr/bin/ && \
   rm awscliv2.zip && \
-  rm -rf ./aws && \ 
+  rm -rf ./aws && \
   aws --version
