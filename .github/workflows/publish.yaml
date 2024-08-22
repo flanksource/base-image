@@ -45,6 +45,10 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY_IMAGE }}
+          tags: |
+            latest
+            type=schedule,pattern={{date 'YYYYMMDD'}}
+            type=sha
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -104,6 +108,10 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY_IMAGE }}
+          tags: |
+            latest
+            type=schedule,pattern={{date 'YYYYMMDD'}}
+            type=sha
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
