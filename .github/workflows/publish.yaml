@@ -35,6 +35,7 @@ jobs:
           - platform: linux/arm64
             runner: ubuntu-arm64
     steps:
+      - uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2.7.0
       - name: Prepare
         run: |
           platform=${{ matrix.platform }}
@@ -100,6 +101,7 @@ jobs:
           - platform: linux/arm64
             runner: ubuntu-latest
     steps:
+      - uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2.7.0
       - name: Prepare
         run: |
           platform=${{ matrix.platform }}
