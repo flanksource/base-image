@@ -11,7 +11,7 @@ RUN --mount=type=cache,target=/var/lib/apt \
     if [ "${TARGETARCH}" = "amd64" ]; then ARCH="x64"; fi && \
     curl -L -o /tmp/powershell.tar.gz https://github.com/PowerShell/PowerShell/releases/download/v${PS_VERSION}/powershell-${PS_VERSION}-linux-${ARCH}.tar.gz
 
-FROM ubuntu:jammy-20240227@sha256:77906da86b60585ce12215807090eb327e7386c8fafb5402369e421f44eff17e as base
+FROM ubuntu:jammy-20240227@sha256:77906da86b60585ce12215807090eb327e7386c8fafb5402369e421f44eff17e AS base
 WORKDIR /app
 
 ARG TARGETARCH
@@ -76,7 +76,7 @@ RUN --mount=from=installer-env,target=/mnt/pwsh,source=/tmp \
     apt-get clean
 
 # Minimalized Google cloud sdk
-FROM base as gcloud-installer
+FROM base AS gcloud-installer
 
 ENV GCLOUD_PATH=/opt/google-cloud-sdk
 ENV PATH $GCLOUD_PATH/bin:$PATH
@@ -101,7 +101,10 @@ fi && \
     gcloud --version
 
 
-FROM base as final
+FROM base AS final
+
+# Install all locales
+RUN apt-get install -y locales locales-all
 
 ENV PATH /opt/google-cloud-sdk/bin:$PATH
 ENV CLOUDSDK_PYTHON=/usr/bin/python3
