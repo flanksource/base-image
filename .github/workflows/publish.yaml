@@ -51,6 +51,7 @@ jobs:
           tags: |
             type=schedule,pattern={{date 'YYYYMMDD'}}
             type=sha
+            type=semver,pattern={{version}},value=v${{needs.semantic-release.outputs.release-version}}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
