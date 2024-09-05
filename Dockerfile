@@ -19,12 +19,15 @@ ARG TARGETARCH
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && \
-  apt-get install -y curl unzip ca-certificates zip tzdata wget gnupg2 bzip2 apt-transport-https lsb-release git python3-crcmod python3-openssl --no-install-recommends  && \
+  apt-get install -y curl unzip ca-certificates zip tzdata wget gnupg2 bzip2 apt-transport-https locales locales-all lsb-release git python3-crcmod python3-openssl --no-install-recommends  && \
   apt-get clean
 
 RUN apt-get update && apt-get upgrade -y && \
   rm -Rf /var/lib/apt/lists/* && \
   apt-get clean
+
+RUN locale-gen en_US.UTF-8
+RUN update-locale LANG=en_US.UTF-8
 
 # stern, jq, yq
 RUN curl -sLS https://get.arkade.dev | sh && \
@@ -104,6 +107,9 @@ fi && \
 FROM base AS final
 
 # Install all locales
+RUN locale-gen en_US.UTF-8
+RUN update-locale LANG=en_US.UTF-8
+
 RUN apt-get install -y locales locales-all
 
 ENV PATH /opt/google-cloud-sdk/bin:$PATH
