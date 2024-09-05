@@ -43,6 +43,15 @@ jobs:
           echo "SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
           echo "TIMESTAMP=$(date '+%Y%m%d%H%M%S')" >> $GITHUB_ENV
 
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY_IMAGE }}
+          tags: |
+            type=sha
+            type=semver,pattern={{version}},value=v${{needs.semantic-release.outputs.release-version}}
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
@@ -106,7 +115,6 @@ jobs:
         with:
           images: ${{ env.REGISTRY_IMAGE }}
           tags: |
-            type=schedule,pattern={{date 'YYYYMMDD-HHmmss'}}
             type=sha
             
       - name: Set up QEMU
@@ -151,6 +159,7 @@ jobs:
       REGISTRY_IMAGE: flanksource/base-image
     needs:
       - base
+      - semantic-release
     steps:
       - name: Download digests
         uses: actions/download-artifact@v4
@@ -169,7 +178,6 @@ jobs:
           images: ${{ env.REGISTRY_IMAGE }}
           tags: |
             type=sha
-            type=schedule,pattern={{date 'YYYY-MM-DD-HH.mm.ss'}}
             type=semver,pattern={{version}},value=v${{needs.semantic-release.outputs.release-version}}
 
       - name: Login to Docker Hub
@@ -213,7 +221,6 @@ jobs:
           images: ${{ env.REGISTRY_IMAGE }}
           tags: |
             type=sha
-            type=schedule,pattern={{date 'YYYYMMDD-HHmmss'}}
             type=semver,pattern={{version}},value=v${{needs.semantic-release.outputs.release-version}}
 
       - name: Login to Docker Hub
