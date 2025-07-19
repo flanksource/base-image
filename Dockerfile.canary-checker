@@ -1,4 +1,4 @@
-FROM --platform=${BUILDPLATFORM:-linux/amd64} flanksource/base-image as base
+FROM flanksource/base-image as base
 ARG TARGETARCH
 
 WORKDIR /app
