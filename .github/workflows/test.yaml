@@ -25,8 +25,8 @@ jobs:
         #   https://github.com/docker/buildx/issues/59
         # We want --load to save the image to local registry.
         run: |
-          docker buildx build --load --platform linux/arm64 -t flanksource/base-image:${{ env.RELEASE_VERSION }} .
-          docker buildx build --load --platform linux/amd64 -t flanksource/base-image:${{ env.RELEASE_VERSION }} .
+          docker buildx build --load --platform linux/arm64 --cache-from type=gha --cache-to type=gha,mode=max -t flanksource/base-image:${{ env.RELEASE_VERSION }} .
+          docker buildx build --load --platform linux/amd64 --cache-from type=gha --cache-to type=gha,mode=max -t flanksource/base-image:${{ env.RELEASE_VERSION }} .
 
       - name: Run the container
         run: |
@@ -34,8 +34,8 @@ jobs:
 
       - name: Build canary checker base image for multiple platforms
         run: |
-          docker buildx build --load --platform linux/arm64 -f Dockerfile.canary-checker -t flanksource/base-image-canary-checker:${{ env.RELEASE_VERSION }} .
-          docker buildx build --load --platform linux/amd64 -f Dockerfile.canary-checker -t flanksource/base-image-canary-checker:${{ env.RELEASE_VERSION }} .
+          docker buildx build --load --platform linux/arm64 --cache-from type=gha --cache-to type=gha,mode=max -f Dockerfile.canary-checker -t flanksource/base-image-canary-checker:${{ env.RELEASE_VERSION }} .
+          docker buildx build --load --platform linux/amd64 --cache-from type=gha --cache-to type=gha,mode=max -f Dockerfile.canary-checker -t flanksource/base-image-canary-checker:${{ env.RELEASE_VERSION }} .
 
       - name: Run the container
         run: |
