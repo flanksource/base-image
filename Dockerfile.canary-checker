@@ -1,9 +1,7 @@
-FROM flanksource/base-image as base
+FROM --platform=${BUILDPLATFORM:-linux/amd64} flanksource/base-image as base
 ARG TARGETARCH
 
 WORKDIR /app
-
-ARG TARGETARCH
 
 RUN apt-get update && \
   apt-get install -y python3 python3-pip zip --no-install-recommends && \
