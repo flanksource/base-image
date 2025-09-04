@@ -1,4 +1,4 @@
-FROM ubuntu:jammy-20240227@sha256:77906da86b60585ce12215807090eb327e7386c8fafb5402369e421f44eff17e AS installer-env
+FROM ubuntu:jammy-20250819@sha256:4e0171b9275e12d375863f2b3ae9ce00a4c53ddda176bd55868df97ac6f21a6e AS installer-env
 ENV DEBIAN_FRONTEND=noninteractive
 ARG TARGETARCH
 ENV PS_VERSION=7.4.4
@@ -11,7 +11,7 @@ RUN --mount=type=cache,target=/var/lib/apt \
     if [ "${TARGETARCH}" = "amd64" ]; then ARCH="x64"; fi && \
     curl -L -o /tmp/powershell.tar.gz https://github.com/PowerShell/PowerShell/releases/download/v${PS_VERSION}/powershell-${PS_VERSION}-linux-${ARCH}.tar.gz
 
-FROM ubuntu:jammy-20240227@sha256:77906da86b60585ce12215807090eb327e7386c8fafb5402369e421f44eff17e AS base
+FROM ubuntu:jammy-20250819@sha256:4e0171b9275e12d375863f2b3ae9ce00a4c53ddda176bd55868df97ac6f21a6e AS base
 WORKDIR /app
 
 ARG TARGETARCH
