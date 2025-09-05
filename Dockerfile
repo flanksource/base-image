@@ -34,13 +34,20 @@ RUN curl -sLS https://get.arkade.dev | sh && \
   arkade get kubectl stern jq yq sops flux helm kustomize --path /usr/bin && \
   /bin/bash -c "chmod +x /usr/bin/{kubectl,stern,jq,yq,sops,flux,helm,kustomize}"
 
-RUN apt-get update && apt-get install -y build-essential --no-install-recommends && \
-    curl https://sh.rustup.rs -sSf | sh -s -- -y && \
-    $HOME/.cargo/bin/cargo install fblog && \
-    mv $HOME/.cargo/bin/fblog /usr/bin/fblog && \
-    apt-get autoremove build-essential -y && \
-    apt-get clean && \
-    $HOME/.cargo/bin/rustup self uninstall -y
+RUN if [ "${TARGETARCH}" = "amd64" ]; then \
+        curl -L "https://github.com/brocode/fblog/releases/latest/download/fblog" -o /usr/bin/fblog && \
+        chmod +x /usr/bin/fblog; \
+    else \
+        echo "fblog binary not available for $ARCH, building from source..." && \
+        apt-get install -y build-essential --no-install-recommends && \
+        curl https://sh.rustup.rs -sSf | sh -s -- -y && \
+        $HOME/.cargo/bin/cargo install fblog && \
+        mv $HOME/.cargo/bin/fblog /usr/bin/fblog && \
+        apt-get autoremove build-essential -y && \
+        apt-get clean && \
+        $HOME/.cargo/bin/rustup self uninstall -y; \
+    fi
+
 
 ARG POWERSHELL_VERSION=7.4.4
 
@@ -59,7 +66,7 @@ RUN --mount=from=installer-env,target=/mnt/pwsh,source=/tmp \
     apt-get install -y --no-install-recommends \
       less locales \
       gss-ntlmssp \
-      libicu70 \
+      libicu74 \
       libssl3 \
       libc6 \
       libgcc1 \
