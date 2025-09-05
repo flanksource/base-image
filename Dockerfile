@@ -126,9 +126,20 @@ COPY --from=gcloud-installer /opt/google-cloud-sdk /opt/google-cloud-sdk
 # This is to be able to update gcloud packages
 RUN git config --system credential.'https://source.developers.google.com'.helper gcloud.sh
 
-
 # Azure CLI
-RUN  curl -sL https://aka.ms/InstallAzureCLIDeb | /bin/bash
+RUN apt-get update && apt-get install -y --no-install-recommends apt-transport-https ca-certificates curl gnupg lsb-release && \
+  mkdir -p /etc/apt/keyrings && \
+  curl -sLSk https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | tee /etc/apt/keyrings/microsoft.gpg > /dev/null && \
+  chmod go+r /etc/apt/keyrings/microsoft.gpg
+
+RUN AZ_DIST=$(lsb_release -cs) && \
+  echo "Types: deb" > /etc/apt/sources.list.d/azure-cli.sources && \
+  echo "URIs: https://packages.microsoft.com/repos/azure-cli/" >> /etc/apt/sources.list.d/azure-cli.sources && \
+  echo "Suites: ${AZ_DIST}" >> /etc/apt/sources.list.d/azure-cli.sources && \
+  echo "Components: main" >> /etc/apt/sources.list.d/azure-cli.sources && \
+  echo "Architectures: $(dpkg --print-architecture)" >> /etc/apt/sources.list.d/azure-cli.sources && \
+  echo "Signed-by: /etc/apt/keyrings/microsoft.gpg" >> /etc/apt/sources.list.d/azure-cli.sources && \
+  apt-get update && apt-get install -y --no-install-recommends azure-cli
 
 # AWS CLI
 RUN AWSCLI_URL="https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" && \
