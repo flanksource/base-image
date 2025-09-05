@@ -1,4 +1,4 @@
-FROM ubuntu:jammy-20240227@sha256:77906da86b60585ce12215807090eb327e7386c8fafb5402369e421f44eff17e AS installer-env
+FROM ubuntu:noble@sha256:6633ff3b87e40bf09281277f1072458819e915da008095ebdcc76c921a3628a1 AS installer-env
 ENV DEBIAN_FRONTEND=noninteractive
 ARG TARGETARCH
 ENV PS_VERSION=7.4.4
@@ -11,7 +11,7 @@ RUN --mount=type=cache,target=/var/lib/apt \
     if [ "${TARGETARCH}" = "amd64" ]; then ARCH="x64"; fi && \
     curl -L -o /tmp/powershell.tar.gz https://github.com/PowerShell/PowerShell/releases/download/v${PS_VERSION}/powershell-${PS_VERSION}-linux-${ARCH}.tar.gz
 
-FROM ubuntu:jammy-20240227@sha256:77906da86b60585ce12215807090eb327e7386c8fafb5402369e421f44eff17e AS base
+FROM ubuntu:noble@sha256:6633ff3b87e40bf09281277f1072458819e915da008095ebdcc76c921a3628a1 AS base
 WORKDIR /app
 
 ARG TARGETARCH
@@ -31,8 +31,9 @@ RUN update-locale LANG=en_US.UTF-8
 
 # stern, jq, yq
 RUN curl -sLS https://get.arkade.dev | sh && \
-  arkade get kubectl stern jq yq sops --path /usr/bin && \
-  chmod +x /usr/bin/kubectl /usr/bin/stern /usr/bin/jq /usr/bin/yq /usr/bin/sops
+  arkade get kubectl stern jq yq sops flux helm kustomize --path /usr/bin && \
+  chmod +x /usr/bin/{kubectl,stern,jq,yq,sops,flux,helm,kustomize}
+
 
 RUN apt-get update && apt-get install -y build-essential --no-install-recommends && \
     curl https://sh.rustup.rs -sSf | sh -s -- -y && \
