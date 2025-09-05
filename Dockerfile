@@ -127,17 +127,7 @@ RUN git config --system credential.'https://source.developers.google.com'.helper
 
 
 # Azure CLI
-RUN mkdir -p /etc/apt/keyrings && \
-  curl -sLS https://packages.microsoft.com/keys/microsoft.asc | \
-    gpg --dearmor | tee /etc/apt/keyrings/microsoft.gpg > /dev/null && \
-  chmod go+r /etc/apt/keyrings/microsoft.gpg &&  \
-  echo "deb [arch=`dpkg --print-architecture` signed-by=/etc/apt/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/azure-cli/ $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/azure-cli.list && \
-  cat /etc/apt/sources.list.d/azure-cli.list && \
-  apt-get update && \
-  apt-get install -y azure-cli && \
-  apt-get clean && \
-  rm -rf $(find /opt/az -regex ".*/__pycache__") && \
-  az version
+RUN  curl -sL https://aka.ms/InstallAzureCLIDeb | /bin/bash
 
 # AWS CLI
 RUN AWSCLI_URL="https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" && \
