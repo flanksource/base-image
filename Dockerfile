@@ -20,6 +20,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && \
   apt-get install -y curl unzip ca-certificates zip tzdata wget gnupg2 bzip2 apt-transport-https locales locales-all lsb-release git python3-crcmod python3-openssl --no-install-recommends  && \
+  update-ca-certificates && \
   apt-get clean
 
 RUN apt-get update && apt-get upgrade -y && \
