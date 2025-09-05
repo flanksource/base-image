@@ -39,10 +39,11 @@ RUN if [ "${TARGETARCH}" = "amd64" ]; then \
         chmod +x /usr/bin/fblog; \
     else \
         echo "fblog binary not available for $ARCH, building from source..." && \
+        apt-get update && apt-get install -y build-essential --no-install-recommends && \
         curl https://sh.rustup.rs -sSf | sh -s -- -y && \
         $HOME/.cargo/bin/cargo install fblog && \
         mv $HOME/.cargo/bin/fblog /usr/bin/fblog && \
-        apt-get update && apt-get autoremove build-essential -y && \
+        apt-get autoremove build-essential -y && \
         apt-get clean && \
         $HOME/.cargo/bin/rustup self uninstall -y; \
     fi
