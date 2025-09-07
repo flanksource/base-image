@@ -1,4 +1,4 @@
-FROM ubuntu:jammy-20240227@sha256:77906da86b60585ce12215807090eb327e7386c8fafb5402369e421f44eff17e AS installer-env
+FROM ubuntu:noble@sha256:9cbed754112939e914291337b5e554b07ad7c392491dba6daf25eef1332a22e8 AS installer-env
 ENV DEBIAN_FRONTEND=noninteractive
 ARG TARGETARCH
 ENV PS_VERSION=7.4.4
@@ -11,7 +11,7 @@ RUN --mount=type=cache,target=/var/lib/apt \
     if [ "${TARGETARCH}" = "amd64" ]; then ARCH="x64"; fi && \
     curl -L -o /tmp/powershell.tar.gz https://github.com/PowerShell/PowerShell/releases/download/v${PS_VERSION}/powershell-${PS_VERSION}-linux-${ARCH}.tar.gz
 
-FROM ubuntu:jammy-20240227@sha256:77906da86b60585ce12215807090eb327e7386c8fafb5402369e421f44eff17e AS base
+FROM ubuntu:noble@sha256:9cbed754112939e914291337b5e554b07ad7c392491dba6daf25eef1332a22e8 AS base
 WORKDIR /app
 
 ARG TARGETARCH
@@ -20,6 +20,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && \
   apt-get install -y curl unzip ca-certificates zip tzdata wget gnupg2 bzip2 apt-transport-https locales locales-all lsb-release git python3-crcmod python3-openssl --no-install-recommends  && \
+  update-ca-certificates && \
   apt-get clean
 
 RUN apt-get update && apt-get upgrade -y && \
@@ -31,16 +32,23 @@ RUN update-locale LANG=en_US.UTF-8
 
 # stern, jq, yq
 RUN curl -sLS https://get.arkade.dev | sh && \
-  arkade get kubectl stern jq yq sops --path /usr/bin && \
-  chmod +x /usr/bin/kubectl /usr/bin/stern /usr/bin/jq /usr/bin/yq /usr/bin/sops
+  arkade get kubectl stern jq yq sops flux helm kustomize --path /usr/bin && \
+  /bin/bash -c "chmod +x /usr/bin/{kubectl,stern,jq,yq,sops,flux,helm,kustomize}"
 
-RUN apt-get update && apt-get install -y build-essential --no-install-recommends && \
-    curl https://sh.rustup.rs -sSf | sh -s -- -y && \
-    $HOME/.cargo/bin/cargo install fblog && \
-    mv $HOME/.cargo/bin/fblog /usr/bin/fblog && \
-    apt-get autoremove build-essential -y && \
-    apt-get clean && \
-    $HOME/.cargo/bin/rustup self uninstall -y
+RUN if [ "${TARGETARCH}" = "amd64" ]; then \
+        curl -L "https://github.com/brocode/fblog/releases/latest/download/fblog" -o /usr/bin/fblog && \
+        chmod +x /usr/bin/fblog; \
+    else \
+        echo "fblog binary not available for $ARCH, building from source..." && \
+        apt-get update && apt-get install -y build-essential --no-install-recommends && \
+        curl https://sh.rustup.rs -sSf | sh -s -- -y && \
+        $HOME/.cargo/bin/cargo install fblog && \
+        mv $HOME/.cargo/bin/fblog /usr/bin/fblog && \
+        apt-get autoremove build-essential -y && \
+        apt-get clean && \
+        $HOME/.cargo/bin/rustup self uninstall -y; \
+    fi
+
 
 ARG POWERSHELL_VERSION=7.4.4
 
@@ -59,7 +67,7 @@ RUN --mount=from=installer-env,target=/mnt/pwsh,source=/tmp \
     apt-get install -y --no-install-recommends \
       less locales \
       gss-ntlmssp \
-      libicu70 \
+      libicu74 \
       libssl3 \
       libc6 \
       libgcc1 \
@@ -118,19 +126,20 @@ COPY --from=gcloud-installer /opt/google-cloud-sdk /opt/google-cloud-sdk
 # This is to be able to update gcloud packages
 RUN git config --system credential.'https://source.developers.google.com'.helper gcloud.sh
 
-
 # Azure CLI
-RUN mkdir -p /etc/apt/keyrings && \
-  curl -sLS https://packages.microsoft.com/keys/microsoft.asc | \
-    gpg --dearmor | tee /etc/apt/keyrings/microsoft.gpg > /dev/null && \
-  chmod go+r /etc/apt/keyrings/microsoft.gpg &&  \
-  echo "deb [arch=`dpkg --print-architecture` signed-by=/etc/apt/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/azure-cli/ $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/azure-cli.list && \
-  cat /etc/apt/sources.list.d/azure-cli.list && \
-  apt-get update && \
-  apt-get install -y azure-cli && \
-  apt-get clean && \
-  rm -rf $(find /opt/az -regex ".*/__pycache__") && \
-  az version
+RUN apt-get update && apt-get install -y --no-install-recommends apt-transport-https ca-certificates curl gnupg lsb-release && \
+  mkdir -p /etc/apt/keyrings && \
+  curl -sLSk https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | tee /etc/apt/keyrings/microsoft.gpg > /dev/null && \
+  chmod go+r /etc/apt/keyrings/microsoft.gpg
+
+RUN AZ_DIST=$(lsb_release -cs) && \
+  echo "Types: deb" > /etc/apt/sources.list.d/azure-cli.sources && \
+  echo "URIs: https://packages.microsoft.com/repos/azure-cli/" >> /etc/apt/sources.list.d/azure-cli.sources && \
+  echo "Suites: ${AZ_DIST}" >> /etc/apt/sources.list.d/azure-cli.sources && \
+  echo "Components: main" >> /etc/apt/sources.list.d/azure-cli.sources && \
+  echo "Architectures: $(dpkg --print-architecture)" >> /etc/apt/sources.list.d/azure-cli.sources && \
+  echo "Signed-by: /etc/apt/keyrings/microsoft.gpg" >> /etc/apt/sources.list.d/azure-cli.sources && \
+  apt-get update && apt-get install -y --no-install-recommends azure-cli
 
 # AWS CLI
 RUN AWSCLI_URL="https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" && \

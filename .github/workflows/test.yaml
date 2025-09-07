@@ -6,7 +6,7 @@ permissions:
   contents: read
 
 jobs:
-  docker-build:
+  docker-build-amd64:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2.7.0
@@ -17,7 +17,7 @@ jobs:
           echo "RELEASE_VERSION=$(tr -dc 0-9 </dev/urandom | head -c 4)" >> $GITHUB_ENV
 
       - name: Set up Docker Buildx #must be executed before a step that contains platforms
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
       - name: Build base image for multiple platforms
         # Need to build for 2 platforms in 2 stages even though --platform=linux/amd64,linux/arm64 is possible.
@@ -25,7 +25,6 @@ jobs:
         #   https://github.com/docker/buildx/issues/59
         # We want --load to save the image to local registry.
         run: |
-          docker buildx build --load --platform linux/arm64 --cache-from type=gha --cache-to type=gha,mode=max -t flanksource/base-image:${{ env.RELEASE_VERSION }} .
           docker buildx build --load --platform linux/amd64 --cache-from type=gha --cache-to type=gha,mode=max -t flanksource/base-image:${{ env.RELEASE_VERSION }} .
 
       - name: Run the container
@@ -34,8 +33,41 @@ jobs:
 
       - name: Build canary checker base image for multiple platforms
         run: |
-          docker buildx build --load --platform linux/arm64 --cache-from type=gha --cache-to type=gha,mode=max -f Dockerfile.canary-checker -t flanksource/base-image-canary-checker:${{ env.RELEASE_VERSION }} .
           docker buildx build --load --platform linux/amd64 --cache-from type=gha --cache-to type=gha,mode=max -f Dockerfile.canary-checker -t flanksource/base-image-canary-checker:${{ env.RELEASE_VERSION }} .
+
+      - name: Run the container
+        run: |
+          docker run --pull=never --rm flanksource/base-image-canary-checker:${{ env.RELEASE_VERSION }} echo 'hello world'
+
+  docker-build-arm64:
+    runs-on: ubuntu-24.04-arm
+
+    steps:
+      - uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2.7.0
+
+      - name: Set version
+        # Set a random release version
+        run: |
+          echo "RELEASE_VERSION=$(tr -dc 0-9 </dev/urandom | head -c 4)" >> $GITHUB_ENV
+
+      - name: Set up Docker Buildx #must be executed before a step that contains platforms
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build base image for multiple platforms
+        # Need to build for 2 platforms in 2 stages even though --platform=linux/amd64,linux/arm64 is possible.
+        # This is because --load isn't compatible when multiple args are passed to --platform.
+        #   https://github.com/docker/buildx/issues/59
+        # We want --load to save the image to local registry.
+        run: |
+          docker buildx build --load --platform linux/arm64 --cache-from type=gha --cache-to type=gha,mode=max -t flanksource/base-image:${{ env.RELEASE_VERSION }} .
+
+      - name: Run the container
+        run: |
+          docker run --pull=never --rm flanksource/base-image:${{ env.RELEASE_VERSION }} echo 'hello world'
+
+      - name: Build canary checker base image for multiple platforms
+        run: |
+          docker buildx build --load --platform linux/arm64 --cache-from type=gha --cache-to type=gha,mode=max -f Dockerfile.canary-checker -t flanksource/base-image-canary-checker:${{ env.RELEASE_VERSION }} .
 
       - name: Run the container
         run: |
