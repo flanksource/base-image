@@ -1,4 +1,4 @@
-FROM flanksource/base-image as base
+FROM flanksource/base-image AS base
 ARG TARGETARCH
 
 WORKDIR /app
@@ -9,7 +9,7 @@ RUN apt-get update && \
   rm -Rf /usr/share/doc && rm -Rf /usr/share/man  && \
   apt-get clean
 
-FROM base as jre
+FROM base AS jre
 
 ENV SDKMAN_DIR="/usr/lib/sdkman"
 
@@ -42,9 +42,9 @@ ENV JAVA_HOME=/opt/java
 ENV JMETER_HOME=/opt/jmeter
 COPY --from=jre /javaruntime $JAVA_HOME
 COPY --from=jre /usr/lib/sdkman/candidates/jmeter/current /opt/jmeter
-ENV PATH "${JAVA_HOME}/bin:${JMETER_HOME}/bin:${PATH}"
+ENV PATH="${JAVA_HOME}/bin:${JMETER_HOME}/bin:${PATH}"
 
-RUN pip3 install  pip pyyaml lxml requests robotframework \
+RUN pip3 install --break-system-packages pip pyyaml lxml requests robotframework \
     robotframework \
     robotframework-jsonlibrary \
     robotframework-jsonschemalibrary \

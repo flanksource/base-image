@@ -90,7 +90,7 @@ RUN --mount=from=installer-env,target=/mnt/pwsh,source=/tmp \
 FROM base AS gcloud-installer
 
 ENV GCLOUD_PATH=/opt/google-cloud-sdk
-ENV PATH $GCLOUD_PATH/bin:$PATH
+ENV PATH=$GCLOUD_PATH/bin:$PATH
 ENV CLOUDSDK_PYTHON=/usr/bin/python3
 # Download and install cloud sdk. Review the components I install, you may not need them.
 RUN GCLOUDCLI_URL="https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-linux-x86_64.tar.gz" && \
@@ -120,7 +120,7 @@ RUN update-locale LANG=en_US.UTF-8
 
 RUN apt-get install -y locales locales-all
 
-ENV PATH /opt/google-cloud-sdk/bin:$PATH
+ENV PATH=/opt/google-cloud-sdk/bin:$PATH
 ENV CLOUDSDK_PYTHON=/usr/bin/python3
 COPY --from=gcloud-installer /opt/google-cloud-sdk /opt/google-cloud-sdk
 # This is to be able to update gcloud packages
