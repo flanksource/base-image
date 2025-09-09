@@ -80,7 +80,7 @@ RUN --mount=from=installer-env,target=/mnt/pwsh,source=/tmp \
     chmod +x /opt/powershell/pwsh && \
     ln -s /opt/powershell/pwsh /usr/bin/pwsh && \
     # install module outsize of powershell due to segfaults on emulated arm
-    curl -L -o powershell-yaml.nupkg https://psg-prod-eastus.azureedge.net/packages/powershell-yaml.0.4.7.nupkg  && \
+    curl -L -o powershell-yaml.nupkg https://www.powershellgallery.com/api/v2/package/powershell-yaml/0.4.7  && \
     mkdir -p $HOME/.local/share/powershell/Modules/powershell-yaml/0.4.7 && \
     unzip powershell-yaml.nupkg -x */.rels *.nuspec *.xml -d $HOME/.local/share/powershell/Modules/powershell-yaml/0.4.7 && \
     rm powershell-yaml.nupkg && \
@@ -90,7 +90,7 @@ RUN --mount=from=installer-env,target=/mnt/pwsh,source=/tmp \
 FROM base AS gcloud-installer
 
 ENV GCLOUD_PATH=/opt/google-cloud-sdk
-ENV PATH $GCLOUD_PATH/bin:$PATH
+ENV PATH=$GCLOUD_PATH/bin:$PATH
 ENV CLOUDSDK_PYTHON=/usr/bin/python3
 # Download and install cloud sdk. Review the components I install, you may not need them.
 RUN GCLOUDCLI_URL="https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-linux-x86_64.tar.gz" && \
@@ -120,7 +120,7 @@ RUN update-locale LANG=en_US.UTF-8
 
 RUN apt-get install -y locales locales-all
 
-ENV PATH /opt/google-cloud-sdk/bin:$PATH
+ENV PATH=/opt/google-cloud-sdk/bin:$PATH
 ENV CLOUDSDK_PYTHON=/usr/bin/python3
 COPY --from=gcloud-installer /opt/google-cloud-sdk /opt/google-cloud-sdk
 # This is to be able to update gcloud packages

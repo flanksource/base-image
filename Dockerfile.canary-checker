@@ -1,15 +1,16 @@
-FROM flanksource/base-image as base
+FROM flanksource/base-image AS base
 ARG TARGETARCH
 
 WORKDIR /app
 
 RUN apt-get update && \
-  apt-get install -y python3 python3-pip zip --no-install-recommends && \
+  apt-get install -y python3 python3-full python3-pip pipx zip --no-install-recommends && \
   rm -Rf /var/lib/apt/lists/*  && \
   rm -Rf /usr/share/doc && rm -Rf /usr/share/man  && \
-  apt-get clean
+  apt-get clean && \
+  pipx install pipenv
 
-FROM base as jre
+FROM base AS jre
 
 ENV SDKMAN_DIR="/usr/lib/sdkman"
 
@@ -42,21 +43,7 @@ ENV JAVA_HOME=/opt/java
 ENV JMETER_HOME=/opt/jmeter
 COPY --from=jre /javaruntime $JAVA_HOME
 COPY --from=jre /usr/lib/sdkman/candidates/jmeter/current /opt/jmeter
-ENV PATH "${JAVA_HOME}/bin:${JMETER_HOME}/bin:${PATH}"
-
-RUN pip3 install  pip pyyaml lxml requests robotframework \
-    robotframework \
-    robotframework-jsonlibrary \
-    robotframework-jsonschemalibrary \
-    robotframework-requests \
-    robotframework-restlibrary \
-    robotframework-seleniumlibrary \
-    robotframework-excellib \
-    robotframework-crypto \
-    robotframework-databaselibrary \
-    psycopg2-binary \
-    PyMySQL && \
-    pip3 cache purge
+ENV PATH="${JAVA_HOME}/bin:${JMETER_HOME}/bin:${PATH}"
 
 # Restic
 ENV RESTIC_VERSION=0.15.2
