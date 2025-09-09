@@ -80,7 +80,7 @@ RUN --mount=from=installer-env,target=/mnt/pwsh,source=/tmp \
     chmod +x /opt/powershell/pwsh && \
     ln -s /opt/powershell/pwsh /usr/bin/pwsh && \
     # install module outsize of powershell due to segfaults on emulated arm
-    curl -L -o powershell-yaml.nupkg https://psg-prod-eastus.azureedge.net/packages/powershell-yaml.0.4.7.nupkg  && \
+    curl -L -o powershell-yaml.nupkg https://www.powershellgallery.com/api/v2/package/powershell-yaml/0.4.7  && \
     mkdir -p $HOME/.local/share/powershell/Modules/powershell-yaml/0.4.7 && \
     unzip powershell-yaml.nupkg -x */.rels *.nuspec *.xml -d $HOME/.local/share/powershell/Modules/powershell-yaml/0.4.7 && \
     rm powershell-yaml.nupkg && \

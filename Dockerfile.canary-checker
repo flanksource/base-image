@@ -4,7 +4,7 @@ ARG TARGETARCH
 WORKDIR /app
 
 RUN apt-get update && \
-  apt-get install -y python3 python3-full python3-pip zip --no-install-recommends && \
+  apt-get install -y python3 python3-full python3-pip pipx zip --no-install-recommends && \
   rm -Rf /var/lib/apt/lists/*  && \
   rm -Rf /usr/share/doc && rm -Rf /usr/share/man  && \
   apt-get clean && \
