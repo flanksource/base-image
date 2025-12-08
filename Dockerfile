@@ -30,10 +30,16 @@ RUN apt-get update && apt-get upgrade -y && \
 RUN locale-gen en_US.UTF-8
 RUN update-locale LANG=en_US.UTF-8
 
-# stern, jq, yq
-RUN curl -sLS https://get.arkade.dev | sh && \
-  arkade get kubectl stern jq yq sops flux helm kustomize --path /usr/bin && \
-  /bin/bash -c "chmod +x /usr/bin/{kubectl,stern,jq,yq,sops,flux,helm,kustomize}"
+
+RUN curl -sL https://github.com/flanksource/deps/releases/latest/download/deps-linux-${TARGETARCH}.tar.gz -o deps-linux-${TARGETARCH}.tar.gz  && \
+  tar -xzf deps-linux-${TARGETARCH}.tar.gz -C /usr/bin && \
+  rm deps-linux-${TARGETARCH}.tar.gz
+
+
+RUN --mount=type=bind,target=. \
+  --mount=type=secret,id=GITHUB_TOKEN,env=GITHUB_TOKEN \
+  deps --no-progress install kubectl jq yq sops stern flux helm kustomize --bin-dir /usr/bin
+  
 
 RUN if [ "${TARGETARCH}" = "amd64" ]; then \
         curl -L "https://github.com/brocode/fblog/releases/latest/download/fblog" -o /usr/bin/fblog && \
