@@ -38,7 +38,7 @@ RUN curl -sL https://github.com/flanksource/deps/releases/latest/download/deps-l
 
 RUN --mount=type=bind,target=. \
   --mount=type=secret,id=GITHUB_TOKEN,env=GITHUB_TOKEN \
-  deps --no-progress install kubectl jq yq sops stern flux helm kustomize --bin-dir /usr/bin
+  deps --no-progress install kubectl jq yq sops stern/stern fluxcd/flux2 helm  --bin-dir /usr/bin
   
 
 RUN if [ "${TARGETARCH}" = "amd64" ]; then \
