@@ -25,7 +25,9 @@ jobs:
         #   https://github.com/docker/buildx/issues/59
         # We want --load to save the image to local registry.
         run: |
-          docker buildx build --load --platform linux/amd64 --cache-from type=gha --cache-to type=gha,mode=max -t flanksource/base-image:${{ env.RELEASE_VERSION }} .
+          docker buildx build --load --platform linux/amd64 --cache-from type=gha --cache-to type=gha,mode=max --secret id=GITHUB_TOKEN,env=GITHUB_TOKEN -t flanksource/base-image:${{ env.RELEASE_VERSION }} .
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run the container
         run: |
@@ -33,11 +35,21 @@ jobs:
 
       - name: Build canary checker base image for multiple platforms
         run: |
-          docker buildx build --load --platform linux/amd64 --cache-from type=gha --cache-to type=gha,mode=max -f Dockerfile.canary-checker -t flanksource/base-image-canary-checker:${{ env.RELEASE_VERSION }} .
+          docker buildx build --load --platform linux/amd64 --cache-from type=gha --cache-to type=gha,mode=max --secret id=GITHUB_TOKEN,env=GITHUB_TOKEN -f Dockerfile.canary-checker -t flanksource/base-image-canary-checker:${{ env.RELEASE_VERSION }} .
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run the container
         run: |
           docker run --pull=never --rm flanksource/base-image-canary-checker:${{ env.RELEASE_VERSION }} echo 'hello world'
+
+      - name: Ensure uv and bun are installed
+        run: |
+          docker run --pull=never --rm flanksource/base-image:${{ env.RELEASE_VERSION }} sh -lc "uv --version && bun --version"
+
+      - name: Ensure uv and bun are installed in canary-checker image
+        run: |
+          docker run --pull=never --rm flanksource/base-image-canary-checker:${{ env.RELEASE_VERSION }} sh -lc "uv --version && bun --version"
 
   docker-build-arm64:
     runs-on: ubuntu-24.04-arm
@@ -59,7 +71,9 @@ jobs:
         #   https://github.com/docker/buildx/issues/59
         # We want --load to save the image to local registry.
         run: |
-          docker buildx build --load --platform linux/arm64 --cache-from type=gha --cache-to type=gha,mode=max -t flanksource/base-image:${{ env.RELEASE_VERSION }} .
+          docker buildx build --load --platform linux/arm64 --cache-from type=gha --cache-to type=gha,mode=max --secret id=GITHUB_TOKEN,env=GITHUB_TOKEN -t flanksource/base-image:${{ env.RELEASE_VERSION }} .
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run the container
         run: |
@@ -67,8 +81,18 @@ jobs:
 
       - name: Build canary checker base image for multiple platforms
         run: |
-          docker buildx build --load --platform linux/arm64 --cache-from type=gha --cache-to type=gha,mode=max -f Dockerfile.canary-checker -t flanksource/base-image-canary-checker:${{ env.RELEASE_VERSION }} .
+          docker buildx build --load --platform linux/arm64 --cache-from type=gha --cache-to type=gha,mode=max --secret id=GITHUB_TOKEN,env=GITHUB_TOKEN -f Dockerfile.canary-checker -t flanksource/base-image-canary-checker:${{ env.RELEASE_VERSION }} .
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run the container
         run: |
           docker run --pull=never --rm flanksource/base-image-canary-checker:${{ env.RELEASE_VERSION }} echo 'hello world'
+
+      - name: Ensure uv and bun are installed
+        run: |
+          docker run --pull=never --rm flanksource/base-image:${{ env.RELEASE_VERSION }} sh -lc "uv --version && bun --version"
+
+      - name: Ensure uv and bun are installed in canary-checker image
+        run: |
+          docker run --pull=never --rm flanksource/base-image-canary-checker:${{ env.RELEASE_VERSION }} sh -lc "uv --version && bun --version"
