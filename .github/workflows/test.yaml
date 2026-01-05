@@ -46,6 +46,9 @@ jobs:
       - name: Ensure uv and bun are installed
         run: |
           docker run --pull=never --rm flanksource/base-image:${{ env.RELEASE_VERSION }} sh -lc "uv --version && bun --version"
+
+      - name: Ensure uv and bun are installed in canary-checker image
+        run: |
           docker run --pull=never --rm flanksource/base-image-canary-checker:${{ env.RELEASE_VERSION }} sh -lc "uv --version && bun --version"
 
   docker-build-arm64:
@@ -89,4 +92,7 @@ jobs:
       - name: Ensure uv and bun are installed
         run: |
           docker run --pull=never --rm flanksource/base-image:${{ env.RELEASE_VERSION }} sh -lc "uv --version && bun --version"
+
+      - name: Ensure uv and bun are installed in canary-checker image
+        run: |
           docker run --pull=never --rm flanksource/base-image-canary-checker:${{ env.RELEASE_VERSION }} sh -lc "uv --version && bun --version"
