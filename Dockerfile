@@ -38,7 +38,7 @@ RUN curl -sL https://github.com/flanksource/deps/releases/latest/download/deps-l
 
 RUN --mount=type=bind,target=. \
   --mount=type=secret,id=GITHUB_TOKEN,env=GITHUB_TOKEN \
-  deps --no-progress install bun uv kubectl jq yq sops stern/stern fluxcd/flux2 helm --bin-dir /usr/bin
+  deps --no-progress install bun@stable uv@stable kubectl@stable jq yq sops stern/stern flux@stable helm@stable --bin-dir /usr/bin
   
 RUN if [ "${TARGETARCH}" = "amd64" ]; then \
         curl -L "https://github.com/brocode/fblog/releases/latest/download/fblog" -o /usr/bin/fblog && \
