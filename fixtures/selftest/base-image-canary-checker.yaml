@@ -47,7 +47,7 @@ spec:
 
     - name: pipenv
       description: "pipenv is available"
-      script: /home/canary-checker/.local/bin/pipenv --version
+      script: pipenv --version
       display:
         expr: 'results.stderr + results.stdout'
       test:

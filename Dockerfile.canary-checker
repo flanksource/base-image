@@ -43,7 +43,7 @@ ENV JAVA_HOME=/opt/java
 ENV JMETER_HOME=/opt/jmeter
 COPY --from=jre /javaruntime $JAVA_HOME
 COPY --from=jre /usr/lib/sdkman/candidates/jmeter/current /opt/jmeter
-ENV PATH="${JAVA_HOME}/bin:${JMETER_HOME}/bin:${PATH}"
+ENV PATH="${JAVA_HOME}/bin:${JMETER_HOME}/bin:/root/.local/bin:${PATH}"
 
 RUN curl -sL https://github.com/flanksource/deps/releases/latest/download/deps-linux-${TARGETARCH}.tar.gz -o deps-linux-${TARGETARCH}.tar.gz  && \
   tar -xzf deps-linux-${TARGETARCH}.tar.gz -C /usr/bin && \
