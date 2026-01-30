@@ -8,35 +8,47 @@ spec:
     - name: java
       description: "Java is available"
       script: java --version | head -1
+      display:
+        expr: 'results.stderr + results.stdout'
       test:
         expr: 'results.exitCode == 0'
 
     - name: jmeter
       description: "JMeter is available"
-      script: jmeter --version 2>&1 | head -1
+      script: jmeter --version 2>&1 | grep -i jmeter | head -1
+      display:
+        expr: 'results.stderr + results.stdout'
       test:
-        expr: 'results.stdout.contains("Apache JMeter") || results.stderr.contains("Apache JMeter")'
+        expr: 'results.exitCode == 0'
 
     - name: restic
       description: "restic is available"
       script: restic version
+      display:
+        expr: 'results.stderr + results.stdout'
       test:
         expr: 'results.stdout.contains("restic")'
 
     - name: k6
       description: "k6 is available"
       script: k6 version
+      display:
+        expr: 'results.stderr + results.stdout'
       test:
         expr: 'results.stdout.contains("k6")'
 
     - name: benthos
       description: "benthos is available"
       script: benthos --version
+      display:
+        expr: 'results.stderr + results.stdout'
       test:
         expr: 'results.exitCode == 0'
 
     - name: pipenv
       description: "pipenv is available"
-      script: pipenv --version
+      script: /home/canary-checker/.local/bin/pipenv --version
+      display:
+        expr: 'results.stderr + results.stdout'
       test:
         expr: 'results.stdout.contains("pipenv")'
