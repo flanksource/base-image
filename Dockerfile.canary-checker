@@ -61,12 +61,6 @@ RUN curl -L https://github.com/restic/restic/releases/download/v${RESTIC_VERSION
   mv /app/restic /usr/local/bin/ && \
   rm -rf /app/restic.bz2
 
-# Mergestat
-# Unsupported in arm64 as of yet
-RUN curl -L https://github.com/flanksource/askgit/releases/download/v0.61.0-flanksource.1/mergestat-linux-amd64.tar.gz  -o mergestat.tar.gz && \
-  tar zxf mergestat.tar.gz -C /usr/local/bin/ && \
-  rm mergestat.tar.gz
-
 # K6
 ENV K6_VERSION=v0.47.0
 RUN curl -L https://github.com/grafana/k6/releases/download/${K6_VERSION}/k6-${K6_VERSION}-linux-${TARGETARCH}.tar.gz -o k6.tar.gz && \
@@ -76,9 +70,3 @@ RUN curl -L https://github.com/grafana/k6/releases/download/${K6_VERSION}/k6-${K
 
 # Benthos: high performance and resilient stream processor
 RUN curl -Lsf https://sh.benthos.dev | bash -s -- 4.22.0
-
-# dsq: commandline tool for running SQL queries against JSON, CSV, Excel, Parquet, and more
-RUN curl -L https://github.com/multiprocessio/dsq/releases/download/v0.23.0/dsq-linux-x64-v0.23.0.zip -o dsq.zip && \
-  unzip -q dsq.zip && \
-  mv dsq /usr/local/bin/dsq && \
-  rm dsq.zip
