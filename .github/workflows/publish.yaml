@@ -163,6 +163,8 @@ jobs:
     needs:
       - base
       - semantic-release
+    outputs:
+      digest: ${{ steps.inspect.outputs.digest }}
     steps:
       - name: Download digests
         uses: actions/download-artifact@v4
@@ -196,8 +198,16 @@ jobs:
             $(printf '${{ env.REGISTRY_IMAGE }}@sha256:%s ' *)
 
       - name: Inspect image
+        id: inspect
         run: |
-          docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:${{ steps.meta.outputs.version }}
+          OUTPUT=$(docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:${{ steps.meta.outputs.version }})
+          echo "$OUTPUT"
+          DIGEST=$(echo "$OUTPUT" | grep -m1 "^Digest:" | awk '{print $2}')
+          if [ -z "$DIGEST" ]; then
+            echo "::error::Failed to extract digest from imagetools inspect output"
+            exit 1
+          fi
+          echo "digest=$DIGEST" >> $GITHUB_OUTPUT
 
   merge-canary-checker:
     runs-on: ubuntu-latest
@@ -206,6 +216,8 @@ jobs:
     needs:
       - semantic-release
       - canary-checker
+    outputs:
+      digest: ${{ steps.inspect.outputs.digest }}
     steps:
       - name: Download digests
         uses: actions/download-artifact@v4
@@ -239,5 +251,61 @@ jobs:
             $(printf '${{ env.REGISTRY_IMAGE }}@sha256:%s ' *)
 
       - name: Inspect image
+        id: inspect
         run: |
-          docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:${{ steps.meta.outputs.version }}
+          OUTPUT=$(docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:${{ steps.meta.outputs.version }})
+          echo "$OUTPUT"
+          DIGEST=$(echo "$OUTPUT" | grep -m1 "^Digest:" | awk '{print $2}')
+          if [ -z "$DIGEST" ]; then
+            echo "::error::Failed to extract digest from imagetools inspect output"
+            exit 1
+          fi
+          echo "digest=$DIGEST" >> $GITHUB_OUTPUT
+
+  update-release:
+    runs-on: ubuntu-latest
+    if: needs.semantic-release.outputs.new-release-published == 'true'
+    needs:
+      - semantic-release
+      - merge-base
+      - merge-canary-checker
+    permissions:
+      contents: write
+    steps:
+      - name: Update release with image references
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          VERSION="v${{ needs.semantic-release.outputs.release-version }}"
+          BASE_DIGEST="${{ needs.merge-base.outputs.digest }}"
+          CANARY_DIGEST="${{ needs.merge-canary-checker.outputs.digest }}"
+
+          EXISTING_NOTES=$(gh release view "$VERSION" --json body -q .body) || {
+            echo "::error::Failed to fetch existing release notes for $VERSION"
+            exit 1
+          }
+
+          {
+            echo "$EXISTING_NOTES"
+            echo ""
+            echo "## Docker Images"
+            echo ""
+            echo "**flanksource/base-image**"
+            echo '```'
+            echo "flanksource/base-image:${VERSION}"
+            echo '```'
+            echo '```'
+            echo "flanksource/base-image@${BASE_DIGEST}"
+            echo '```'
+            echo ""
+            echo "**flanksource/base-image-canary-checker**"
+            echo '```'
+            echo "flanksource/base-image-canary-checker:${VERSION}"
+            echo '```'
+            echo '```'
+            echo "flanksource/base-image-canary-checker@${CANARY_DIGEST}"
+            echo '```'
+          } > /tmp/release-notes.md
+
+          gh release edit "$VERSION" --notes-file /tmp/release-notes.md
