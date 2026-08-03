@@ -7,9 +7,13 @@ RUN --mount=type=cache,target=/var/lib/apt \
     --mount=type=cache,target=/var/cache/apt \
     apt-get update \
     && apt-get install --no-install-recommends -y  curl less locales ca-certificates && \
-    ARCH=${TARGETARCH} && \
-    if [ "${TARGETARCH}" = "amd64" ]; then ARCH="x64"; fi && \
-    curl -L -o /tmp/powershell.tar.gz https://github.com/PowerShell/PowerShell/releases/download/v${PS_VERSION}/powershell-${PS_VERSION}-linux-${ARCH}.tar.gz
+    case "${TARGETARCH}" in \
+      amd64) ARCH="x64"; PS_SHA256="49435200c43fe6ff83f3e62f9909b4062ed817a31d0697fb57611ea4faca633b" ;; \
+      arm64) ARCH="arm64"; PS_SHA256="34d8e7d12df163419fca6602e546421c1aabcf6c8f8bb4402dd4e03b1a4c4437" ;; \
+      *) echo "Unsupported architecture: ${TARGETARCH}" >&2; exit 1 ;; \
+    esac && \
+    curl --fail --location -o /tmp/powershell.tar.gz https://github.com/PowerShell/PowerShell/releases/download/v${PS_VERSION}/powershell-${PS_VERSION}-linux-${ARCH}.tar.gz && \
+    echo "${PS_SHA256}  /tmp/powershell.tar.gz" | sha256sum --check --strict
 
 FROM ubuntu:noble@sha256:c35e29c9450151419d9448b0fd75374fec4fff364a27f176fb458d472dfc9e54 AS base
 WORKDIR /app
