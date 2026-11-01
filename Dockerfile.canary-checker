@@ -1,4 +1,4 @@
-FROM flanksource/base-image AS base
+FROM flanksource/base-image:0.8.1 AS base
 ARG TARGETARCH
 
 WORKDIR /app
@@ -15,19 +15,14 @@ FROM base AS jre
 ENV SDKMAN_DIR="/usr/lib/sdkman"
 
 RUN apt-get update &&   apt-get install -y binutils --no-install-recommends
-ENV JAVA_VERSION=21.0.2-tem
-ENV JMETER_VERSION=5.6
-ENV JMETER_HOME=${SDKMAN_DIR}/candidates/jmeter/${JMETER_VERSION}
+ENV JAVA_VERSION=21.0.13.0+9-tem
 ENV JAVA_HOME=${SDKMAN_DIR}/candidates/java/${JAVA_VERSION}
-ENV PATH="$PATH:$SDKMAN_DIR/bin:$JAVA_HOME/bin:$JMETER_HOME/bin"
+ENV PATH="$PATH:$SDKMAN_DIR/bin:$JAVA_HOME/bin"
 SHELL [ "bash", "-c" ]
 RUN  curl -s "https://get.sdkman.io?rcupdate=false" | bash && \
     . $SDKMAN_DIR/bin/sdkman-init.sh && \
     sdk install java ${JAVA_VERSION} ${JAVA_HOME} && \
-    sdk install jmeter ${JMETER_VERSION} ${JMETER_HOME} && \
     sdk flush tmp
-RUN rm -rf $SDKMAN_DIR/candidates/jmeter/current/docs && \
-    rm -rf  $SDKMAN_DIR/candidates/jmeter/current/printable_docs
 
 RUN  jlink \
       --verbose \
@@ -40,10 +35,8 @@ RUN  jlink \
 FROM base
 
 ENV JAVA_HOME=/opt/java
-ENV JMETER_HOME=/opt/jmeter
 COPY --from=jre /javaruntime $JAVA_HOME
-COPY --from=jre /usr/lib/sdkman/candidates/jmeter/current /opt/jmeter
-ENV PATH="${JAVA_HOME}/bin:${JMETER_HOME}/bin:/root/.local/bin:${PATH}"
+ENV PATH="${JAVA_HOME}/bin:/root/.local/bin:${PATH}"
 
 RUN curl -sL https://github.com/flanksource/deps/releases/latest/download/deps-linux-${TARGETARCH}.tar.gz -o deps-linux-${TARGETARCH}.tar.gz  && \
   tar -xzf deps-linux-${TARGETARCH}.tar.gz -C /usr/bin && \
@@ -52,21 +45,3 @@ RUN curl -sL https://github.com/flanksource/deps/releases/latest/download/deps-l
 RUN --mount=type=bind,target=. \
   --mount=type=secret,id=GITHUB_TOKEN,env=GITHUB_TOKEN \
   deps --no-progress install bun uv --bin-dir /usr/bin
-
-# Restic
-ENV RESTIC_VERSION=0.18.1
-RUN curl -L https://github.com/restic/restic/releases/download/v${RESTIC_VERSION}/restic_${RESTIC_VERSION}_linux_${TARGETARCH}.bz2 -o restic.bz2 && \
-  bunzip2  /app/restic.bz2 && \
-  chmod +x /app/restic && \
-  mv /app/restic /usr/local/bin/ && \
-  rm -rf /app/restic.bz2
-
-# K6
-ENV K6_VERSION=v0.47.0
-RUN curl -L https://github.com/grafana/k6/releases/download/${K6_VERSION}/k6-${K6_VERSION}-linux-${TARGETARCH}.tar.gz -o k6.tar.gz && \
-  tar xvf k6.tar.gz && \
-  mv k6-${K6_VERSION}-linux-${TARGETARCH}/k6 /usr/local/bin/k6 && \
-  rm k6.tar.gz
-
-# Benthos: high performance and resilient stream processor
-RUN curl -Lsf https://sh.benthos.dev | bash -s -- 4.22.0

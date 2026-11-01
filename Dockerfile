@@ -1,21 +1,21 @@
-FROM ubuntu:noble@sha256:c35e29c9450151419d9448b0fd75374fec4fff364a27f176fb458d472dfc9e54 AS installer-env
+FROM ubuntu:26.10@sha256:262df65c0ec6bf8d9dcc87454f4330a05fae4b97825f45854af3b136666584c2 AS installer-env
 ENV DEBIAN_FRONTEND=noninteractive
 ARG TARGETARCH
-ENV PS_VERSION=7.4.4
+ENV PS_VERSION=7.6.9
 
 RUN --mount=type=cache,target=/var/lib/apt \
     --mount=type=cache,target=/var/cache/apt \
     apt-get update \
     && apt-get install --no-install-recommends -y  curl less locales ca-certificates && \
     case "${TARGETARCH}" in \
-      amd64) ARCH="x64"; PS_SHA256="49435200c43fe6ff83f3e62f9909b4062ed817a31d0697fb57611ea4faca633b" ;; \
-      arm64) ARCH="arm64"; PS_SHA256="34d8e7d12df163419fca6602e546421c1aabcf6c8f8bb4402dd4e03b1a4c4437" ;; \
+      amd64) ARCH="x64"; PS_SHA256="1da6d6d6035d651f20e70ddee7c4c15ac6ab8b9fb40ee92240d91263f28a884b" ;; \
+      arm64) ARCH="arm64"; PS_SHA256="02eb9991af447c7e7fe881acde195961afd397c40b8eb1c2b3856b84ec2d85f2" ;; \
       *) echo "Unsupported architecture: ${TARGETARCH}" >&2; exit 1 ;; \
     esac && \
     curl --fail --location -o /tmp/powershell.tar.gz https://github.com/PowerShell/PowerShell/releases/download/v${PS_VERSION}/powershell-${PS_VERSION}-linux-${ARCH}.tar.gz && \
     echo "${PS_SHA256}  /tmp/powershell.tar.gz" | sha256sum --check --strict
 
-FROM ubuntu:noble@sha256:c35e29c9450151419d9448b0fd75374fec4fff364a27f176fb458d472dfc9e54 AS base
+FROM ubuntu:26.10@sha256:262df65c0ec6bf8d9dcc87454f4330a05fae4b97825f45854af3b136666584c2 AS base
 WORKDIR /app
 
 ARG TARGETARCH
@@ -59,7 +59,7 @@ RUN if [ "${TARGETARCH}" = "amd64" ]; then \
     fi
 
 
-ARG POWERSHELL_VERSION=7.4.4
+ARG POWERSHELL_VERSION=7.6.9
 
 # Define ENVs for Localization/Globalization
 ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
@@ -68,7 +68,7 @@ ENV LANG=en_US.UTF-8
 ENV PS_INSTALL_FOLDER=/opt/powershell
 ENV POWERSHELL_TELEMETRY_OPTOUT=1
 ENV PSModuleAnalysisCachePath=/var/cache/microsoft/powershell/PSModuleAnalysisCache/ModuleAnalysisCache
-ENV PS_VERSION=7.4.4
+ENV PS_VERSION=7.6.9
 RUN --mount=from=installer-env,target=/mnt/pwsh,source=/tmp \
     --mount=type=cache,target=/var/lib/apt \
     --mount=type=cache,target=/var/cache/apt \
@@ -89,9 +89,9 @@ RUN --mount=from=installer-env,target=/mnt/pwsh,source=/tmp \
     chmod +x /opt/powershell/pwsh && \
     ln -s /opt/powershell/pwsh /usr/bin/pwsh && \
     # install module outsize of powershell due to segfaults on emulated arm
-    curl -L -o powershell-yaml.nupkg https://www.powershellgallery.com/api/v2/package/powershell-yaml/0.4.7  && \
-    mkdir -p $HOME/.local/share/powershell/Modules/powershell-yaml/0.4.7 && \
-    unzip powershell-yaml.nupkg -x */.rels *.nuspec *.xml -d $HOME/.local/share/powershell/Modules/powershell-yaml/0.4.7 && \
+    curl -L -o powershell-yaml.nupkg https://www.powershellgallery.com/api/v2/package/powershell-yaml/0.4.9  && \
+    mkdir -p $HOME/.local/share/powershell/Modules/powershell-yaml/0.4.9 && \
+    unzip powershell-yaml.nupkg -x */.rels *.nuspec *.xml -d $HOME/.local/share/powershell/Modules/powershell-yaml/0.4.9 && \
     rm powershell-yaml.nupkg && \
     apt-get clean
 
