@@ -1,4 +1,5 @@
-FROM flanksource/base-image:0.8.1 AS base
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE} AS base
 ARG TARGETARCH
 
 WORKDIR /app

@@ -17,20 +17,36 @@ jobs:
           - { arch: arm64, runner: ubuntu-24.04-arm, image: base-image, dockerfile: Dockerfile }
           - { arch: arm64, runner: ubuntu-24.04-arm, image: base-image-canary-checker, dockerfile: Dockerfile.canary-checker }
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Set version
         run: |
           echo "RELEASE_VERSION=$(tr -dc 0-9 </dev/urandom | head -c 4)" >> $GITHUB_ENV
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+        with:
+          driver-opts: network=host
+
+      - name: Build base image for canary-checker
+        if: matrix.dockerfile == 'Dockerfile.canary-checker'
+        run: |
+          docker run -d --rm -p 5000:5000 --name registry registry:2
+          docker buildx build --push --platform linux/${{ matrix.arch }} \
+            --cache-from type=gha --cache-to type=gha,mode=max \
+            --secret id=GITHUB_TOKEN,env=GITHUB_TOKEN \
+            -f Dockerfile \
+            -t localhost:5000/base-image:${{ env.RELEASE_VERSION }} .
+          echo "BASE_IMAGE=localhost:5000/base-image:${{ env.RELEASE_VERSION }}" >> $GITHUB_ENV
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build image
         run: |
           docker buildx build --load --platform linux/${{ matrix.arch }} \
             --cache-from type=gha --cache-to type=gha,mode=max \
             --secret id=GITHUB_TOKEN,env=GITHUB_TOKEN \
+            ${BASE_IMAGE:+--build-arg BASE_IMAGE=$BASE_IMAGE} \
             -f ${{ matrix.dockerfile }} \
             -t flanksource/${{ matrix.image }}:${{ env.RELEASE_VERSION }} .
         env:
