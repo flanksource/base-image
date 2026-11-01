@@ -76,7 +76,7 @@ RUN --mount=from=installer-env,target=/mnt/pwsh,source=/tmp \
     apt-get install -y --no-install-recommends \
       less locales \
       gss-ntlmssp \
-      libicu74 \
+      libicu78 \
       libssl3 \
       libc6 \
       libgcc1 \
