@@ -79,7 +79,7 @@ RUN --mount=from=installer-env,target=/mnt/pwsh,source=/tmp \
       libicu78 \
       libssl3 \
       libc6 \
-      libgcc1 \
+      libgcc-s1 \
       libgssapi-krb5-2 \
       liblttng-ust1 \
       libstdc++6 \
@@ -89,9 +89,9 @@ RUN --mount=from=installer-env,target=/mnt/pwsh,source=/tmp \
     chmod +x /opt/powershell/pwsh && \
     ln -s /opt/powershell/pwsh /usr/bin/pwsh && \
     # install module outsize of powershell due to segfaults on emulated arm
-    curl -L -o powershell-yaml.nupkg https://www.powershellgallery.com/api/v2/package/powershell-yaml/0.4.9  && \
-    mkdir -p $HOME/.local/share/powershell/Modules/powershell-yaml/0.4.9 && \
-    unzip powershell-yaml.nupkg -x */.rels *.nuspec *.xml -d $HOME/.local/share/powershell/Modules/powershell-yaml/0.4.9 && \
+    curl -L -o powershell-yaml.nupkg https://www.powershellgallery.com/api/v2/package/powershell-yaml/0.4.10  && \
+    mkdir -p $HOME/.local/share/powershell/Modules/powershell-yaml/0.4.10 && \
+    unzip powershell-yaml.nupkg -x */.rels *.nuspec *.xml -d $HOME/.local/share/powershell/Modules/powershell-yaml/0.4.10 && \
     rm powershell-yaml.nupkg && \
     apt-get clean
 
@@ -141,8 +141,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends apt-transport-h
   curl -sLSk https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | tee /etc/apt/keyrings/microsoft.gpg > /dev/null && \
   chmod go+r /etc/apt/keyrings/microsoft.gpg
 
-RUN AZ_DIST=$(lsb_release -cs) && \
-  echo "Types: deb" > /etc/apt/sources.list.d/azure-cli.sources && \
+# Microsoft does not publish an azure-cli suite for every Ubuntu release (lsb_release -cs returns an unpublished codename on 26.10), so pin the newest published suite
+ARG AZ_DIST=noble
+RUN echo "Types: deb" > /etc/apt/sources.list.d/azure-cli.sources && \
   echo "URIs: https://packages.microsoft.com/repos/azure-cli/" >> /etc/apt/sources.list.d/azure-cli.sources && \
   echo "Suites: ${AZ_DIST}" >> /etc/apt/sources.list.d/azure-cli.sources && \
   echo "Components: main" >> /etc/apt/sources.list.d/azure-cli.sources && \
