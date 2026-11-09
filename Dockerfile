@@ -42,7 +42,8 @@ RUN curl -sL https://github.com/flanksource/deps/releases/latest/download/deps-l
 
 RUN --mount=type=bind,target=. \
   --mount=type=secret,id=GITHUB_TOKEN,env=GITHUB_TOKEN \
-  deps --no-progress install bun@stable uv@stable kubectl@stable jq yq sops stern/stern flux@stable helm@stable --bin-dir /usr/bin
+  deps --no-progress install bun@stable uv@stable kubectl@stable jq yq sops stern/stern flux@stable helm@stable --bin-dir /usr/bin && \
+  rm -rf /root/.deps
   
 RUN if [ "${TARGETARCH}" = "amd64" ]; then \
         curl -L "https://github.com/brocode/fblog/releases/latest/download/fblog" -o /usr/bin/fblog && \
@@ -149,7 +150,10 @@ RUN echo "Types: deb" > /etc/apt/sources.list.d/azure-cli.sources && \
   echo "Components: main" >> /etc/apt/sources.list.d/azure-cli.sources && \
   echo "Architectures: $(dpkg --print-architecture)" >> /etc/apt/sources.list.d/azure-cli.sources && \
   echo "Signed-by: /etc/apt/keyrings/microsoft.gpg" >> /etc/apt/sources.list.d/azure-cli.sources && \
-  apt-get update && apt-get install -y --no-install-recommends azure-cli
+  apt-get update && apt-get install -y --no-install-recommends azure-cli && \
+  # azure-cli bundles its own Python packages; upgrade the ones with known CVEs ahead of the next azure-cli release
+  /opt/az/bin/python3 -m pip install --no-cache-dir --root-user-action=ignore --upgrade pip urllib3 cryptography pyopenssl oauthlib && \
+  /opt/az/bin/python3 -m pip check
 
 # AWS CLI
 RUN AWSCLI_URL="https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" && \

@@ -9,7 +9,8 @@ RUN apt-get update && \
   rm -Rf /var/lib/apt/lists/*  && \
   rm -Rf /usr/share/doc && rm -Rf /usr/share/man  && \
   apt-get clean && \
-  pipx install pipenv
+  pipx install pipenv && \
+  rm -rf /root/.cache
 
 FROM base AS jre
 
@@ -45,4 +46,5 @@ RUN curl -sL https://github.com/flanksource/deps/releases/latest/download/deps-l
 
 RUN --mount=type=bind,target=. \
   --mount=type=secret,id=GITHUB_TOKEN,env=GITHUB_TOKEN \
-  deps --no-progress install bun uv --bin-dir /usr/bin
+  deps --no-progress install bun uv --bin-dir /usr/bin && \
+  rm -rf /root/.deps
