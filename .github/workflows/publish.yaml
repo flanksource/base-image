@@ -78,6 +78,9 @@ jobs:
 
       - name: Fail on fixable CRITICAL vulnerabilities
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        env:
+          # the digest is a single-platform index; without this Trivy looks for the runner's platform
+          TRIVY_PLATFORM: ${{ matrix.platform }}
         with:
           image-ref: ${{ env.REGISTRY_IMAGE }}@${{ steps.build.outputs.digest }}
           scanners: vuln
@@ -156,6 +159,9 @@ jobs:
 
       - name: Fail on fixable CRITICAL vulnerabilities
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        env:
+          # the digest is a single-platform index; without this Trivy looks for the runner's platform
+          TRIVY_PLATFORM: ${{ matrix.platform }}
         with:
           image-ref: ${{ env.REGISTRY_IMAGE }}@${{ steps.build.outputs.digest }}
           scanners: vuln
