@@ -1,4 +1,4 @@
-FROM ubuntu:26.10@sha256:262df65c0ec6bf8d9dcc87454f4330a05fae4b97825f45854af3b136666584c2 AS installer-env
+FROM ubuntu:26.10@sha256:c4ca31b6e93261c5dd773826f789738a49e414ca04fc094b1ccd0f91e07329a2 AS installer-env
 ENV DEBIAN_FRONTEND=noninteractive
 ARG TARGETARCH
 ENV PS_VERSION=7.6.9
@@ -15,7 +15,7 @@ RUN --mount=type=cache,target=/var/lib/apt \
     curl --fail --location -o /tmp/powershell.tar.gz https://github.com/PowerShell/PowerShell/releases/download/v${PS_VERSION}/powershell-${PS_VERSION}-linux-${ARCH}.tar.gz && \
     echo "${PS_SHA256}  /tmp/powershell.tar.gz" | sha256sum --check --strict
 
-FROM ubuntu:26.10@sha256:262df65c0ec6bf8d9dcc87454f4330a05fae4b97825f45854af3b136666584c2 AS base
+FROM ubuntu:26.10@sha256:c4ca31b6e93261c5dd773826f789738a49e414ca04fc094b1ccd0f91e07329a2 AS base
 WORKDIR /app
 
 ARG TARGETARCH
